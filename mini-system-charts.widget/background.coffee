@@ -19,5 +19,5 @@ style: """
     display inline-block
     height: 27px
     width: 5px
-    background-color: #000
+    background-color: #0008
 """

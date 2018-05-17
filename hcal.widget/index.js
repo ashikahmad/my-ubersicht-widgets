@@ -21,7 +21,7 @@ render: function () {
  
 style: "                              \n\
   bottom: 100px                        \n\
-  left: 50px                          \n\
+  left: 25px                          \n\
   font-family: Helvetica Neue         \n\
   font-size: 11px                     \n\
   font-weight: 500                    \n\

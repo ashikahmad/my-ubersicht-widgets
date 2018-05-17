@@ -136,7 +136,7 @@ style: """
     margin -2px -4px 3px 0
     border-radius 3px
     padding  2px
-    background #0004
+    background #0006
 
   .number-in, .number-out
     width 50px
