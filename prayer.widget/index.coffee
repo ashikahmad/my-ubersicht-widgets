@@ -1,15 +1,18 @@
-# See bottom of the file for command parameter details.
+prayerlib = require './node_modules/prayer/index.js'
 
-calcMethod 	= 1
-asrMethod  	= 1
+calcMethod 	= 'Karachi' # Options: MWL|ISNA|Egypt|Makkah|Karachi|Tehran|Jafari
+asrMethod  	= 'Hanafi'  # Options: Standard|Hanafi
+hourFormat  = '12h'     # Options: 12h|24h 
+addEdgeFiller = true    # Adds extra padding in case of first or last prayer, to keep ribbon-style identical
 
-hourFormat12  : true # If false, times shows in 24Hour format, otherwise in 12Hour format (without AM/PM)
-hideSunset 	  : true # As Mugrib and Sunset times are same, It is preffered to hide Sunset column
-addEdgeFiller : true # Adds extra padding in case of Fazr and Isha, to keep ribbon-style identical
+timelist = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']
 
 command: ""
 
-refreshFrequency: 15000
+lat = 0
+lon = 0
+
+refreshFrequency: '1s'
 
 
 render: -> """
@@ -22,69 +25,74 @@ render: -> """
 
 
 afterRender: (domEl) ->
+	prayerlib.setMethod calcMethod
+	prayerlib.adjust {asr: asrMethod}
+
 	geolocation.getCurrentPosition (geo) =>
 		coords = geo.position.coords
 		lat = coords.latitude
 		lon = coords.longitude
 		
-		dt = new Date
-		tz = dt.getTimezoneOffset() * -1 / 60 
-		
 		cityName = geo.address.state
-		
-		@command = "php -f ./prayer.widget/lib/PrayTime.php calc_method=#{calcMethod} asr_method=#{asrMethod} lat=#{lat} lon=#{lon} tz=#{tz}"
 		$(domEl).find('#widget-title').text "Prayer Times : #{cityName}"
 		
 		@refresh()
 
 
 update: (output, domEl) ->
-	titles = ""
-	values = ""
+	return "" if lat == 0
 
-	lines = output.split "\n"
-	return "" if lines.length < 2
-
-	names = lines[0].split ","
-	times = lines[1].split ","
-
-	if this.hideSunset
-		names.splice(4,1)
-		times.splice(4,1)
-
-	curIndex = times.length-1
-	now = new Date()
-	time = new Date()
-	for timeI, i in times
-		timeComp = timeI.split ":"
-		time.setHours(timeComp[0], timeComp[1])
-		if time.getTime() < now.getTime() then curIndex = i else break
+	dt = new Date
+	curTime = dt.getHours() + dt.getMinutes() / 60
+	times = prayerlib.getTimes dt, [lat, lon], 'auto', 'auto', 'Float' 
 	
-	for hhmm, i in times
-			className = "normal";
-			if i == curIndex then className = "current"
-			else if i == curIndex-1 then className = "passed"
-			else if i == curIndex+1 then className = "upcoming"
-			if this.hourFormat12
-				hhmm = hhmm.split ":"
-				hhmm[0] -= if hhmm[0]>12 then 12 else 0
-				hhmm = hhmm.join ":"
+	waqt = ''
+	waqtIndex = -1
+	
+	for prayerName, i in timelist
+		time = times[prayerName]
+		if time <= curTime
+			waqt = prayerName
+			waqtIndex = i
 
-			titles += "<td class='#{className}'>#{names[i]}</td>"
-			values += "<td class='#{className}'>#{hhmm}</td>"
+	prevWaqt = ''
+	nextWaqt = ''
+	
+	prevWaqt = timelist[waqtIndex-1] if waqtIndex > 0
+	nextWaqt = timelist[waqtIndex+1] if waqtIndex < (timelist.length-1)
 
-	$(domEl).find('.titles').html(this.fillSides(titles, curIndex, names.length))
-	$(domEl).find('.values').html(this.fillSides(values, curIndex, times.length))
+	titles = ''
+	values = ''
+
+	for prayerName in timelist
+		time = times[prayerName]
+		formatted = prayerlib.getFormattedTime time, hourFormat, []
+
+		className = "normal"
+		if prayerName == waqt then className = "current"
+		else if prayerName == prevWaqt then className = "passed"
+		else if prayerName == nextWaqt then className = "upcoming"
+
+		titles += "<td class='#{className}'>#{prayerName}</td>"
+		values += "<td class='#{className}'>#{formatted}</td>"
+
+	titles = @fillSides titles, waqtIndex, timelist.length
+	values = @fillSides values, waqtIndex, timelist.length
+
+	$(domEl).find('.titles').html titles
+	$(domEl).find('.values').html values
 
 
-fillSides: (cols, current, total) -> 
-	if this.addEdgeFiller
-		if current==0
-			return "<td class='passed filler'></td>#{cols}"
-		else if current==total-1
-			return "#{cols}<td class='upcoming filler'></td>"
+fillSides: (cols, index, total) ->
+	fixedCols = cols
 
-	return cols
+	if addEdgeFiller
+		if index==0
+			fixedCols = "<td class='passed filler'></td>#{cols}"
+		else if index==total-1
+			fixedCols = "#{cols}<td class='upcoming filler'></td>"
+	
+	return fixedCols
 
 
 style: """
@@ -151,24 +159,3 @@ style: """
 	.filler
 		padding: 0 2px 0 2px
 	"""
-
-###
-COMMAND PARAMETER DETAILS 
----------------------------
-
-1. calcMethod : Calculation method
-=> Possible values:
-	0: Ithna Ashari
-  1: University of Islamic Sciences, Karachi
-  2: Islamic Society of North America (ISNA)
-  3: Muslim World League (MWL)
-  4: Umm al-Qura, Makkah
-  5: Egyptian General Authority of Survey
-  6: Custom Setting
-  7: Institute of Geophysics, University of Tehran
-
-2. asrMethod : Juristic Methods / Asr Calculation Methods
-=> Possible values:
-  0: Shafii (standard)
-  1: Hanafi
-###
