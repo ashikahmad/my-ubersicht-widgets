@@ -24,9 +24,9 @@ command: "pmset -g batt | grep -o '[0-9]*%; [a-z]*'"
 render: (output) ->
   """
   <div class="battery">
+    <span class='status'></span>
     <span class="chart">#{values}</span>
     <span class='number'></span>
-    <span class='status'></span>
   </div>
   """
 
@@ -53,7 +53,7 @@ update: (output, el) ->
 
   ## Set Chart Data
   batteryValue = Math.round(segments*battery/100)
-  fillColors = ((if batteryValue >= x  then fill else colors.black) for x in [0..segments])
+  fillColors = ((if batteryValue > x  then fill else colors.black) for x in [0..segments])
 
   $(".battery .chart", el).peity chartType,
     fill: fillColors
@@ -79,4 +79,5 @@ style: """
 
   .status
     font-size: 8px
+    float: left
 """
