@@ -37,7 +37,11 @@ update: (output, el) ->
   battery = Number(percent)
   
   status = values[1].replace /^\s+|\s+$/g, ""
-  statusIcon = if status == 'charging' then '⚡️' else ''
+  statusIcon = ''
+  if status == 'charging'
+    statusIcon = '⚡️'
+  else if status == 'charged'
+    statusIcon = '🌟'
 
   fill = colors.low
   ## Medium Threshold
