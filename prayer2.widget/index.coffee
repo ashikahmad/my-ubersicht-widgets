@@ -11,6 +11,7 @@ command: ""
 
 lat = 0
 lon = 0
+showFullView = false
 
 refreshFrequency: '1s'
 icon = '<span style="color:#00BFA5FF">☗</span>'
@@ -50,6 +51,15 @@ update: (output, domEl) ->
 	curTime = dt.getHours() + dt.getMinutes() / 60
 	times = prayerlib.getTimes dt, [lat, lon], 'auto', 'auto', 'Float' 
 	
+	[waqtIndex, waqt, prevWaqt, nextWaqt] = @findWaqt times, curTime
+	
+	if showFullView == true
+		@renderFullView times, domEl, waqtIndex, waqt, prevWaqt, nextWaqt
+
+	@renderSmallView times, domEl, waqtIndex, waqt, prevWaqt, nextWaqt, curTime
+
+
+findWaqt: (times, curTime) ->
 	waqt = ''
 	waqtIndex = -1
 	
@@ -61,7 +71,10 @@ update: (output, domEl) ->
 
 	prevWaqt = if waqtIndex > 0 then timelist[waqtIndex-1] else ''
 	nextWaqt = if waqtIndex < (timelist.length-1) then timelist[waqtIndex+1] else ''
+	[waqtIndex, waqt, prevWaqt, nextWaqt]
 
+
+renderFullView: (times, domEl, waqtIndex, waqt, prevWaqt, nextWaqt) ->
 	titles = ''
 	values = ''
 
@@ -83,28 +96,26 @@ update: (output, domEl) ->
 	$(domEl).find('.titles').html titles
 	$(domEl).find('.values').html values
 
-	smalltitle = ''
-	smallvalue = ''
 
+renderSmallView: (times, domEl, waqtIndex, waqt, prevWaqt, nextWaqt, curTime) ->
 	waqt = timelist[timelist.length-1] if waqtIndex == -1
 	nextWaqt = timelist[0] if waqtIndex == timelist.length-1
 
 	remaining = times[nextWaqt] - curTime
 	remaining += 24 if remaining < 0
 	remaining = prayerlib.getFormattedTime remaining, '24h', []	
-	smalltitle = waqt
-	smallvalue = "-#{remaining}"
 	
-	$(domEl).find('#smalltitle').html "#{icon} #{smalltitle}"
-	$(domEl).find('#smallvalue').text " #{smallvalue}"
+	$(domEl).find('#smalltitle').html "#{icon} #{waqt}"
+	$(domEl).find('#smallvalue').text " -#{remaining}"
 	
-	$(domEl).find('#smallview').hover(
-		->
-			$(domEl).find('#fullview').show()
-		->
-			$(domEl).find('#fullview').hide()
-		)
-		
+	showFull = ->
+		showFullView = true
+		$(domEl).find('#fullview').fadeIn(150)
+		@refresh
+	hideFull = ->
+		showFullView = false
+		$(domEl).find('#fullview').fadeOut(150)
+	$(domEl).find('#smallview').hover showFull, hideFull
 
 
 fillSides: (cols, index, total) ->
