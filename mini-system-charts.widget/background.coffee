@@ -9,7 +9,7 @@ style: """
   bottom: -1px
   left: 0
   height: 28px
-  width: 45%
+  width: 46%
   border-radius: 0 20px 5px 0
   background-color: #282828
   opacity: 0.7

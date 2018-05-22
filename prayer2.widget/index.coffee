@@ -14,7 +14,7 @@ lon = 0
 showFullView = false
 
 refreshFrequency: '1s'
-icon = '<span style="color:#00BFA5FF">☗</span>'
+icon = '🕌'
 
 
 render: -> """
@@ -25,7 +25,11 @@ render: -> """
 			<tbody><tr class="values"></tr></tbody>
 		</table>
 	</div>
-	<div id="smallview"><span id="smalltitle">#{icon} ... </span><span id="smallvalue"></span></div>
+	<div id="smallview">
+		<span id="smallicon">#{icon}</span>
+		<span id="smalltitle"> ... </span>
+		<span id="smallvalue">
+		</span></div>
 	"""
 
 
@@ -105,7 +109,8 @@ renderSmallView: (times, domEl, waqtIndex, waqt, prevWaqt, nextWaqt, curTime) ->
 	remaining += 24 if remaining < 0
 	remaining = prayerlib.getFormattedTime remaining, '24h', []	
 	
-	$(domEl).find('#smalltitle').html "#{icon} #{waqt}"
+	$(domEl).find('#smallicon').text "#{icon}"
+	$(domEl).find('#smalltitle').text " #{waqt}"
 	$(domEl).find('#smallvalue').text " -#{remaining}"
 	
 	showFull = ->
@@ -155,13 +160,16 @@ style: """
 		color: rgba(#fff, 0.9)
 		padding: 1px 5px
 		border-radius: 2px
-		font: 12px Inconsolata, monospace, Helvetica Neue, sans-serif
+		font: 13px Inconsolata, monospace, Helvetica Neue, sans-serif
+
+	#smallicon
+		font-size: 11px
 
 	#smalltitle
 		text-transform: capitalize
 
 	#widget-title
-		color: rgba(#FFF, 0.6)
+		color: rgba(#FFF, 0.7)
 		font-size: 14px
 		font-weight: 500
 		padding: 0 0 5px 5px
